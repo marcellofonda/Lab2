@@ -34,6 +34,7 @@ q = 1/D * (S(0,1)*S(2,0)-S(1,1)*S(1,0))
 f(u,m)=m*u + q
 
 @gp x y σ_y "w errorbars"
-@gp :- x f.(x,m+σ_m).-σ_q f.(x,m+σ_m).+σ_q "w filledcu lc 'red' fs transparent solid 0.5"
-@gp :- x f.(x,m-σ_m) .- σ_q f.(x,m-σ_m) .+ σ_q "w filledcu lc 'red' fs transparent solid 0.5"
+@gp :- x f.(x,m+σ_m).-σ_q f.(x,m+σ_m).+σ_q "w filledcu lc 'red' fs transparent solid 0.2"
+@gp :- x f.(x,m-σ_m) .- σ_q f.(x,m-σ_m) .+ σ_q "w filledcu lc 'red' fs transparent solid 0.2"
 @gp :- x f.(x,m) "w l"
+save("fit.gp")
