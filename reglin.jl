@@ -1,11 +1,11 @@
-import Gnuplot
-using Gnuplot
-using DelimitedFiles
+#import Gnuplot
+#using Gnuplot
+#using DelimitedFiles
 
 #USARE IL FILE DEI DATI
-io= open("dati1.csv", "r")
+#io= open("dati1.csv", "r")
 
-a=readdlm(io, ',', Float64)
+#a=readdlm(io, ',', Float64)
 
 function reglin(a,Δy...)
     colonne=size(a,2)
