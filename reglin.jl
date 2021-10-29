@@ -3,38 +3,94 @@ using Gnuplot
 using DelimitedFiles
 
 #USARE IL FILE DEI DATI
-io= open("aga.csv", "r")
+io= open("dati1.csv", "r")
 
 a=readdlm(io, ',', Float64)
 
-x=a[:,1]
-y=a[:,2]
-σ_y=a[:,3]
+function reglin(a,Δy...)
+    colonne=size(a,2)
+    (colonne<2)&&error("Servono almeno due serie di dati per un fit!")
+    (colonne==2)&&(size(Δy,1)==0)&&error("Serve almeno un'indicazione per l'incertezza su y!")
 
-n=size(x,1)
+    x=a[:,1]
+    y=a[:,2]
 
-#x=[0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
-#y=[3.0, 4.0, 5.0, 6., 7, 7.9, 9., 10.0,11.0,12.0]
-#σ_y=[.3 for i in 1:10]
-#σ_x=[1.0]
+   n=size(x,1)
 
-#Definisci la funzione S come sommatoria...
-S(l,k)=sum([x[i]^l * y[i]^k / σ_y[i] for i in 1:n])
+   σ_x=0
+   σ_y=1
 
-#Calcola D
-D=S(0,0)*S(2,0)-S(1,0)^2
+   if (colonne==3)
+       σ_y=a[:,3]
+   elseif (colonne==4)
+       σ_x=a[:,3]
+       σ_y=a[:,4]
+   else
+       σ_y=[Δy for i in 1:n]
+   end
 
-#Calcola coefficiente angolare e quota del fit
-m = 1/D * (S(0,0)*S(1,1)-S(1,0)*S(0,1))
-q = 1/D * (S(0,1)*S(2,0)-S(1,1)*S(1,0))
+   #Definisci la funzione S come sommatoria...
+   S(l,k)=sum([x[i]^l * y[i]^k / σ_y[i]^2 for i in 1:n])
 
-σ_m=sqrt(S(0,0)/D)
-σ_q=sqrt(S(2,0)/D)
+   #Calcola D
+   D=S(0,0)*S(2,0)-S(1,0)^2
 
-f(u,m)=m*u + q
+   #Calcola coefficiente angolare e quota del fit
+   m = 1/D * (S(0,0)*S(1,1)-S(1,0)*S(0,1))
+   q = 1/D * (S(0,1)*S(2,0)-S(1,1)*S(1,0))
 
-@gp x y σ_y "w errorbars"
-@gp :- x f.(x,m+σ_m).-σ_q f.(x,m+σ_m).+σ_q "w filledcu lc 'red' fs transparent solid 0.2"
-@gp :- x f.(x,m-σ_m) .- σ_q f.(x,m-σ_m) .+ σ_q "w filledcu lc 'red' fs transparent solid 0.2"
-@gp :- x f.(x,m) "w l"
-save("fit.gp")
+
+
+    if (colonne==4)
+       global σ_y,σ_x
+       println()
+       sigma=σ_y
+       for i in 1:2
+           global σ_y, σ_x, m, q, D
+
+           println(m,q)
+           println(i)
+           println(σ_y)
+
+           σ_primo= σ_x.^2 .* m^2
+
+           σ_y=sqrt.(sigma.^2 .+ σ_primo)
+
+           #Calcola D
+           D=S(0,0)*S(2,0)-S(1,0)^2
+
+           #Calcola coefficiente angolare e quota del fit
+           m = 1/D * (S(0,0)*S(1,1)-S(1,0)*S(0,1))
+           q = 1/D * (S(0,1)*S(2,0)-S(1,1)*S(1,0))
+        end
+    end
+
+    σ_m=sqrt(S(0,0)/D)
+    σ_q=sqrt(S(2,0)/D)
+
+
+    return m, q, σ_m, σ_q
+end
+#
+# m = 0
+# q= 0
+# σ_m=0
+# σ_q=0
+# #m, q, σ_m, σ_q
+# m, q, σ_m, σ_q= reglin(a)
+#
+# f(u)=m*u + q
+#
+# colonne=size(a,2)
+#
+# if (colonne==3)
+#     @gp x y σ_y "w errorbars"
+#     @gp :- x f.(x) "w l"
+# elseif (colonne==4)
+#     @gp x y σ_x σ_y "w xyerrorbars"
+#     @gp :- x f.(x) "w l"
+# end
+# save("fit.gp")
+#
+# @gp x y.- f.(x) σ_y "w errorbars"
+# save("differenze.gp")
